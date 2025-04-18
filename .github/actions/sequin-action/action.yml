@@ -96,7 +96,7 @@ runs:
       run: |
         timeout=30
         while [ $timeout -gt 0 ]; do
-          if docker compose ps | grep -q "healthy"; then
+          if curl -s -f http://127.0.0.1:7376/health > /dev/null; then
             echo "Sequin service is healthy"
             exit 0
           fi
@@ -105,5 +105,5 @@ runs:
         done
         echo "Sequin service is not healthy"
         echo "Sequin logs:"
-        docker compose logs -f sequin
+        docker compose logs sequin
         exit 1
