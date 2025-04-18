@@ -61,18 +61,4 @@ jobs:
           config-file: "./config/custom.yml"
 
       - name: Test Sequin Connection
-        run: |
-          # Test Sequin health endpoint with retries
-          for i in {1..5}; do
-            echo "Attempt $i:"
-            curl -v --connect-timeout 5 --max-time 10 http://127.0.0.1:7376/health
-            
-            if [ $? -eq 0 ]; then
-              echo "Sequin health check passed"
-              exit 0
-            fi
-            echo "Attempt $i failed, waiting 5 seconds..."
-            sleep 5
-          done
-          echo "Failed to connect to Sequin after 5 attempts"
-          exit 1
+        run: curl -f http://127.0.0.1:7376/health
