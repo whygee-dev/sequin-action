@@ -8,7 +8,7 @@ on:
     branches: [main]
 
 jobs:
-  demo-custom-config:
+  demo:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -17,6 +17,7 @@ jobs:
           POSTGRES_DB: myapp
           POSTGRES_USER: myapp
           POSTGRES_PASSWORD: myapp
+          POSTGRES_INITDB_ARGS: "-c wal_level=logical"
         ports:
           - 5432:5432
         options: >-
@@ -31,6 +32,7 @@ jobs:
       - name: Setup Database
         run: |
           PGPASSWORD=myapp psql -h localhost -U myapp -d myapp << EOL
+
           SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
           CREATE PUBLICATION sequin_pub FOR TABLES IN SCHEMA public WITH (publish_via_partition_root = true);
 
