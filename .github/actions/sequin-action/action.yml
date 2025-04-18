@@ -25,6 +25,9 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Set up Docker Compose
+      uses: docker/setup-compose-action@v1
+
     - name: Create docker-compose file
       shell: bash
       run: |
