@@ -52,7 +52,7 @@ jobs:
           EOL
 
       - name: Setup Sequin Service with Custom Config
-        uses: ./.github/actions/sequin-action
+        uses: ./
         with:
           sequin-version: "latest"
           pg-password: "sequin"
