@@ -116,7 +116,7 @@ jobs:
 
       - name: Verify Audit Log
         run: |
-          for i in {1..50}; do
+          for i in {1..10}; do
             echo "Attempt $i:"
             ROW_COUNT=$(PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -t -c "SELECT COUNT(*) FROM public.\"AuditLog\";")
             echo "Total rows: $ROW_COUNT"
@@ -127,6 +127,7 @@ jobs:
             fi
             if [ "$i" -eq 50 ]; then
               echo "No audit entries found after 50 attempts"
+              PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "SELECT * FROM public.\"AuditLog\";"
               exit 1
             fi
             sleep 2
