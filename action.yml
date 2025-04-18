@@ -36,6 +36,7 @@ runs:
         services:
           sequin:
             image: sequin/sequin:${{ inputs.sequin-version }}
+            network_mode: host
             ports:
               - "7376:7376"
             environment:
