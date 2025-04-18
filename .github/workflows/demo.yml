@@ -62,28 +62,31 @@ jobs:
           mkdir -p config
           cat > config/sequin.yml << EOL
           account:
-            name: 'Playground'
+            name: "Playground"
+
           users:
-            - account: 'Playground'
-              email: 'admin@sequinstream.com'
-              password: 'sequinpassword!'
+            - account: "Playground"
+              email: "admin@sequinstream.com"
+              password: "sequinpassword!"
+
           databases:
-            - name: 'myapp'
-              username: 'myapp'
-              password: 'myapp'
-              hostname: 'localhost'
-              database: 'myapp'
+            - name: "myapp"
+              username: "myapp"
+              password: "myapp"
+              hostname: "localhost"
+              database: "myapp"
               port: 5432
-              slot_name: 'sequin_slot'
-              publication_name: 'sequin_pub'
+              slot_name: "sequin_slot"
+              publication_name: "sequin_pub"
+
           change_retentions:
-            - name: 'Customer Change Retention'
-              source_database: 'myapp'
-              source_table_schema: 'public'
-              source_table_name: 'Customer'
-              destination_database: 'myapp'
-              destination_table_schema: 'public'
-              destination_table_name: 'AuditLog'
+            - name: "Customer Change Retention"
+              source_database: "myapp"
+              source_table_schema: "public"
+              source_table_name: "Customer"
+              destination_database: "myapp"
+              destination_table_schema: "public"
+              destination_table_name: "AuditLog"
           EOL
 
       - name: Setup Sequin Service with Custom Config
@@ -128,6 +131,8 @@ jobs:
             if [ "$i" -eq 10 ]; then
               echo "No audit entries found after 10 attempts"
               PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "SELECT * FROM public.\"AuditLog\";"
+              echo "Latest Sequin logs:"
+              docker compose logs --tail=100 sequin
               exit 1
             fi
             sleep 2
