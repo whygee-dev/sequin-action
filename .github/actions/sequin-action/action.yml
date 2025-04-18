@@ -56,6 +56,12 @@ runs:
                 condition: service_healthy
               sequin_redis:
                 condition: service_started
+            healthcheck:
+              test: ["CMD", "curl", "-f", "http://localhost:7376/health"]
+              interval: 10s
+              timeout: 5s
+              retries: 5
+              start_period: 10s
 
           sequin_postgres:
             image: postgres:16-alpine
@@ -84,18 +90,3 @@ runs:
     - name: Start services
       shell: bash
       run: docker compose up -d
-
-    - name: Wait for services to be ready
-      shell: bash
-      run: |
-        timeout=300
-        while [ $timeout -gt 0 ]; do
-          if curl -s http://localhost:7376/health > /dev/null; then
-            echo "Sequin service is ready"
-            exit 0
-          fi
-          sleep 5
-          timeout=$((timeout-5))
-        done
-        echo "Timeout waiting for Sequin service"
-        exit 1
