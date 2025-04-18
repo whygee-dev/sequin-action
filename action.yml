@@ -38,7 +38,7 @@ runs:
             image: sequin/sequin:${{ inputs.sequin-version }}
             network_mode: host
             environment:
-              - PG_HOSTNAME=sequin_postgres
+              - PG_HOSTNAME=localhost
               - PG_DATABASE=sequin
               - PG_PORT=7377
               - PG_USERNAME=sequin
@@ -46,7 +46,7 @@ runs:
               - PG_POOL_SIZE=20
               - SECRET_KEY_BASE=${{ inputs.secret-key-base }}
               - VAULT_KEY=${{ inputs.vault-key }}
-              - REDIS_URL=redis://sequin_redis:7378
+              - REDIS_URL=redis://localhost:7378
               - CONFIG_FILE_PATH=/config/config.local.yml
             volumes:
               - ${{ inputs.config-file }}:/config/config.local.yml
