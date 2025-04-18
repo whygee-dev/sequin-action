@@ -37,18 +37,16 @@ runs:
           sequin:
             image: sequin/sequin:${{ inputs.sequin-version }}
             network_mode: host
-            ports:
-              - "7376:7376"
             environment:
               - PG_HOSTNAME=sequin_postgres
               - PG_DATABASE=sequin
-              - PG_PORT=5432
+              - PG_PORT=7377
               - PG_USERNAME=sequin
               - PG_PASSWORD=${{ inputs.pg-password }}
               - PG_POOL_SIZE=20
               - SECRET_KEY_BASE=${{ inputs.secret-key-base }}
               - VAULT_KEY=${{ inputs.vault-key }}
-              - REDIS_URL=redis://sequin_redis:6379
+              - REDIS_URL=redis://sequin_redis:7378
               - CONFIG_FILE_PATH=/config/config.local.yml
             volumes:
               - ${{ inputs.config-file }}:/config/config.local.yml
@@ -67,12 +65,12 @@ runs:
           sequin_postgres:
             image: postgres:16-alpine
             network_mode: host
-            ports:
-              - "7377:5432"
             environment:
               - POSTGRES_DB=sequin
               - POSTGRES_USER=sequin
               - POSTGRES_PASSWORD=${{ inputs.pg-password }}
+              - PGPORT=7377
+
             command: ["postgres", "-c", "wal_level=logical"]
             healthcheck:
               test: ["CMD-SHELL", "pg_isready -U sequin -d sequin"]
@@ -85,9 +83,7 @@ runs:
           sequin_redis:
             image: redis:7
             network_mode: host
-            ports:
-              - "7378:6379"
-            command: ["redis-server", "--port", "6379"]
+            command: ["redis-server", "--port", "7378"]
         EOL
 
     - name: Start services
