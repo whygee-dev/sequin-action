@@ -28,10 +28,38 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Database
+        run: |
+          PGPASSWORD=myapp psql -h localhost -U myapp -d myapp << EOL
+          SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
+          CREATE PUBLICATION sequin_pub FOR TABLES IN SCHEMA public WITH (publish_via_partition_root = true);
+
+          CREATE TABLE IF NOT EXISTS public."Customer" (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(100)
+          );
+
+          CREATE TABLE IF NOT EXISTS public."AuditLog" (
+            id BIGSERIAL PRIMARY KEY,
+            seq BIGINT NOT NULL,
+            source_database_id UUID NOT NULL,
+            source_table_oid BIGINT NOT NULL,
+            source_table_schema TEXT NOT NULL,
+            source_table_name TEXT NOT NULL,
+            record_pk TEXT NOT NULL,
+            record JSONB NOT NULL,
+            changes JSONB,
+            action TEXT NOT NULL,
+            transaction_annotations JSONB,
+            committed_at TIMESTAMP WITH TIME ZONE NOT NULL,
+            inserted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+          );
+          EOL
+
       - name: Create custom config
         run: |
           mkdir -p config
-          cat > config/custom.yml << EOL
+          cat > config/sequin.yml << EOL
           account:
             name: 'Playground'
           users:
@@ -45,10 +73,17 @@ jobs:
             username: myapp
             password: myapp
             pool_size: 30
-          redis:
-            url: redis://sequin_redis:6379
-          secret_key_base: wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If
-          vault_key: 2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY=
+            slot_name: 'sequin_slot'
+            publication_name: 'sequin_pub'
+
+          change_retentions:
+            - name: 'Customer Change Retention'
+              source_database: 'myapp'
+              source_table_schema: 'public'
+              destination_database: 'myapp'
+              destination_table_schema: 'public'
+              destination_table_name: 'AuditLog'
+              source_table_name: 'Customer'
           EOL
 
       - name: Setup Sequin Service with Custom Config
@@ -58,7 +93,25 @@ jobs:
           pg-password: "sequin"
           secret-key-base: "wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If"
           vault-key: "2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY="
-          config-file: "./config/custom.yml"
+          config-file: "./config/sequin.yml"
 
       - name: Test Sequin Connection
         run: curl -f http://127.0.0.1:7376/health
+
+      - name: Insert Sample Data
+        run: |
+          PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "INSERT INTO public.\"Customer\" (name) VALUES ('John Doe');"
+
+      - name: Verify Audit Log
+        run: |
+          for i in {1..5}; do
+            echo "Attempt $i:"
+            ROW_COUNT=$(PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -t -c "SELECT COUNT(*) FROM public.\"AuditLog\";")
+            echo "Total rows: $ROW_COUNT"
+            if [ "$ROW_COUNT" -gt 0 ]; then
+              echo "Found audit entries, showing details:"
+              PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "SELECT id, source_table_name, action, record_pk, committed_at FROM public.\"AuditLog\" ORDER BY id DESC LIMIT 5;"
+              break
+            fi
+            sleep 2
+          done
