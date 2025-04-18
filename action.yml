@@ -94,16 +94,20 @@ runs:
     - name: Check for healthy sequin service for 30 seconds, show logs if not healthy
       shell: bash
       run: |
-        timeout=120
+        timeout=240
         while [ $timeout -gt 0 ]; do
           if curl -s -f http://127.0.0.1:7376/health > /dev/null; then
             echo "Sequin service is healthy"
             exit 0
           fi
+          if [ $((timeout % 60)) -eq 0 ]; then
+            echo "Latest Sequin logs:"
+            docker compose logs --tail=50 sequin
+          fi
           sleep 1
           timeout=$((timeout-1))
         done
-        echo "Sequin service is not healthy"
-        echo "Sequin logs:"
+        echo "Sequin service is not healthy after $timeout seconds"
+        echo "Final Sequin logs:"
         docker compose logs sequin
         exit 1
