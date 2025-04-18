@@ -31,7 +31,6 @@ jobs:
 
       - name: Setup Database
         run: |
-          PGPASSWORD=myapp psql -h localhost -U myapp -d postgres -c "CREATE DATABASE myapp;"
           PGPASSWORD=myapp psql -h localhost -U myapp -d myapp << EOL
           SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
           CREATE PUBLICATION sequin_pub FOR TABLES IN SCHEMA public WITH (publish_via_partition_root = true);
@@ -68,16 +67,15 @@ jobs:
             - account: 'Playground'
               email: 'admin@sequinstream.com'
               password: 'sequinpassword!'
-          database:
-            host: localhost
-            port: 5432
-            name: myapp
-            username: myapp
-            password: myapp
-            pool_size: 30
-            slot_name: 'sequin_slot'
-            publication_name: 'sequin_pub'
-
+          databases:
+              host: localhost
+              port: 5432
+              name: myapp
+              username: myapp
+              password: myapp
+              pool_size: 30
+              slot_name: 'sequin_slot'
+              publication_name: 'sequin_pub'
           change_retentions:
             - name: 'Customer Change Retention'
               source_database: 'myapp'
