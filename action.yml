@@ -101,6 +101,8 @@ runs:
         while [ $timeout -gt 0 ]; do
           if curl -s -f http://127.0.0.1:7376/health > /dev/null; then
             echo "Sequin service is healthy"
+            echo "Latest Sequin logs:"
+            docker compose logs --tail=50 sequin
             exit 0
           fi
           if [ $((timeout % 60)) -eq 0 ]; then

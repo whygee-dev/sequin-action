@@ -94,6 +94,7 @@ jobs:
           secret-key-base: "wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If"
           vault-key: "2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY="
           config-file: "./config/sequin.yml"
+          health-check-timeout: "120"
 
       - name: Test Sequin Connection
         run: curl -f http://127.0.0.1:7376/health
@@ -104,7 +105,7 @@ jobs:
 
       - name: Verify Audit Log
         run: |
-          for i in {1..5}; do
+          for i in {1..50}; do
             echo "Attempt $i:"
             ROW_COUNT=$(PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -t -c "SELECT COUNT(*) FROM public.\"AuditLog\";")
             echo "Total rows: $ROW_COUNT"
@@ -112,6 +113,10 @@ jobs:
               echo "Found audit entries, showing details:"
               PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "SELECT id, source_table_name, action, record_pk, committed_at FROM public.\"AuditLog\" ORDER BY id DESC LIMIT 5;"
               break
+            fi
+            if [ "$i" -eq 50 ]; then
+              echo "No audit entries found after 50 attempts"
+              exit 1
             fi
             sleep 2
           done
