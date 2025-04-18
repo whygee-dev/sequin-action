@@ -68,12 +68,12 @@ jobs:
               email: 'admin@sequinstream.com'
               password: 'sequinpassword!'
           databases:
-              host: localhost
+            - name: 'myapp'
+              username: 'myapp'
+              password: 'myapp'
+              hostname: 'localhost'
+              database: 'myapp'
               port: 5432
-              name: myapp
-              username: myapp
-              password: myapp
-              pool_size: 30
               slot_name: 'sequin_slot'
               publication_name: 'sequin_pub'
           change_retentions:
