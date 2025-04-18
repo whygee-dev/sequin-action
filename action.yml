@@ -66,6 +66,7 @@ runs:
 
           sequin_postgres:
             image: postgres:16-alpine
+            network_mode: host
             ports:
               - "7377:5432"
             environment:
@@ -83,6 +84,7 @@ runs:
 
           sequin_redis:
             image: redis:7
+            network_mode: host
             ports:
               - "7378:6379"
             command: ["redis-server", "--port", "6379"]
