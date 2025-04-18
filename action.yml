@@ -94,6 +94,11 @@ runs:
       shell: bash
       run: docker compose up -d
 
+    - name: Show Sequin logs periodically
+      shell: bash
+      run: |
+        nohup bash -c 'while true; do echo "=== Sequin Logs ==="; docker compose logs --tail=100 sequin; sleep 30; done' > /dev/null 2>&1 &
+
     - name: Check for healthy sequin service for 30 seconds, show logs if not healthy
       shell: bash
       run: |

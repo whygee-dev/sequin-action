@@ -101,7 +101,18 @@ jobs:
 
       - name: Insert Sample Data
         run: |
-          PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "INSERT INTO public.\"Customer\" (name) VALUES ('John Doe');"
+          PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "
+            INSERT INTO public.\"Customer\" (name) VALUES 
+              ('John Doe'),
+              ('Jane Smith'),
+              ('Bob Johnson'),
+              ('Alice Brown'),
+              ('Charlie Wilson'),
+              ('Diana Miller'),
+              ('Edward Davis'),
+              ('Fiona Clark'),
+              ('George White'),
+              ('Helen Taylor');"
 
       - name: Verify Audit Log
         run: |
