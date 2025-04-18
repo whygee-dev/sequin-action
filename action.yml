@@ -99,8 +99,8 @@ runs:
       run: |
         timeout=$((${{ inputs.health-check-timeout }}))
         while [ $timeout -gt 0 ]; do
-          if curl -s -f http://127.0.0.1:7376/health > /dev/null; then
-            echo "Sequin service is healthy"
+          if curl -s -f http://127.0.0.1:7376/health > /dev/null && docker compose logs sequin | grep -q "\[SlotProcessorServer\] Initialized"; then
+            echo "Sequin service is healthy and initialized"
             echo "Latest Sequin logs:"
             docker compose logs --tail=100 sequin
             exit 0
