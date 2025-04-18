@@ -32,6 +32,12 @@ jobs:
         run: |
           mkdir -p config
           cat > config/custom.yml << EOL
+          account:
+            name: 'Playground'
+          users:
+            - account: 'Playground'
+              email: 'admin@sequinstream.com'
+              password: 'sequinpassword!'
           database:
             host: localhost
             port: 5432

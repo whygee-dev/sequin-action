@@ -91,10 +91,19 @@ runs:
       shell: bash
       run: docker compose up -d
 
-    - name: Sleep for 10 seconds
+    - name: Check for healthy sequin service for 30 seconds, show logs if not healthy
       shell: bash
-      run: sleep 10
-
-    - name: Log Sequin logs
-      shell: bash
-      run: docker compose logs -f sequin
+      run: |
+        timeout=30
+        while [ $timeout -gt 0 ]; do
+          if docker compose ps | grep -q "healthy"; then
+            echo "Sequin service is healthy"
+            exit 0
+          fi
+          sleep 1
+          timeout=$((timeout-1))
+        done
+        echo "Sequin service is not healthy"
+        echo "Sequin logs:"
+        docker compose logs -f sequin
+        exit 1
