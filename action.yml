@@ -21,6 +21,10 @@ inputs:
   config-file:
     description: "Path to config file"
     required: true
+  health-check-timeout:
+    description: "Timeout in seconds for health check"
+    required: false
+    default: "30"
 
 runs:
   using: "composite"
@@ -93,7 +97,7 @@ runs:
     - name: Check for healthy sequin service for 30 seconds, show logs if not healthy
       shell: bash
       run: |
-        timeout=240
+        timeout=$((${{ inputs.health-check-timeout }}))
         while [ $timeout -gt 0 ]; do
           if curl -s -f http://127.0.0.1:7376/health > /dev/null; then
             echo "Sequin service is healthy"
