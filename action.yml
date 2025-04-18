@@ -94,13 +94,13 @@ runs:
       shell: bash
       run: docker compose up -d
 
-    - name: Check for healthy sequin service for 30 seconds, show logs if not healthy
+    - name: Check for healthy sequin service for ${{ inputs.health-check-timeout }} seconds, show logs if not healthy
       shell: bash
       run: |
-        timeout=$((${{ inputs.health-check-timeout }}))
+        timeout=${{ inputs.health-check-timeout }}
         while [ $timeout -gt 0 ]; do
-          if curl -s -f http://127.0.0.1:7376/health > /dev/null && docker compose logs sequin | grep -q "\[SlotProcessorServer\] Initialized"; then
-            echo "Sequin service is healthy and initialized"
+          if curl -s -f http://127.0.0.1:7376/health > /dev/null; then
+            echo "Sequin service is healthy"
             exit 0
           fi
           if [ $((timeout % 60)) -eq 0 ]; then
