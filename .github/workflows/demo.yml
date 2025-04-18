@@ -56,6 +56,9 @@ jobs:
             committed_at TIMESTAMP WITH TIME ZONE NOT NULL,
             inserted_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
           );
+
+          CREATE UNIQUE INDEX "AuditLog_source_database_id_committed_at_seq_record_pkey" ON "AuditLog" (source_database_id, committed_at, seq, record_pk);
+
           EOL
 
       - name: Create custom config
@@ -131,9 +134,6 @@ jobs:
             fi
             if [ "$i" -eq 10 ]; then
               echo "No audit entries found after 10 attempts"
-              PGPASSWORD=myapp psql -h localhost -U myapp -d myapp -c "SELECT * FROM public.\"AuditLog\";"
-              echo "Latest Sequin logs:"
-              docker compose logs --tail=100 sequin
               exit 1
             fi
             sleep 2
