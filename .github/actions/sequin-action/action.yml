@@ -1,0 +1,98 @@
+name: "Sequin Service Setup"
+description: "Sets up Sequin service with PostgreSQL and Redis"
+
+inputs:
+  sequin-version:
+    description: "Version of Sequin to use"
+    required: true
+    default: "latest"
+  pg-password:
+    description: "Sequin's PostgreSQL password"
+    required: true
+    default: "sequin"
+  secret-key-base:
+    description: "Sequin's secret key base"
+    required: true
+    default: "wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If"
+  vault-key:
+    description: "Sequin's vault key"
+    required: true
+    default: "2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY="
+  config-file:
+    description: "Path to config file"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Create docker-compose file
+      shell: bash
+      run: |
+        cat > docker-compose.yml << EOL
+        version: '3.8'
+        services:
+          sequin:
+            image: sequin/sequin:${{ inputs.sequin-version }}
+            ports:
+              - "7376:7376"
+            environment:
+              - PG_HOSTNAME=sequin_postgres
+              - PG_DATABASE=sequin
+              - PG_PORT=5432
+              - PG_USERNAME=sequin
+              - PG_PASSWORD=${{ inputs.pg-password }}
+              - PG_POOL_SIZE=20
+              - SECRET_KEY_BASE=${{ inputs.secret-key-base }}
+              - VAULT_KEY=${{ inputs.vault-key }}
+              - REDIS_URL=redis://sequin_redis:6379
+              - CONFIG_FILE_PATH=/config/config.local.yml
+            volumes:
+              - ${{ inputs.config-file }}:/config/config.local.yml
+            depends_on:
+              sequin_postgres:
+                condition: service_healthy
+              sequin_redis:
+                condition: service_started
+
+          sequin_postgres:
+            image: postgres:16-alpine
+            ports:
+              - "7377:5432"
+            environment:
+              - POSTGRES_DB=sequin
+              - POSTGRES_USER=sequin
+              - POSTGRES_PASSWORD=${{ inputs.pg-password }}
+            command: ["postgres", "-c", "wal_level=logical"]
+            healthcheck:
+              test: ["CMD-SHELL", "pg_isready -U sequin -d sequin"]
+              interval: 10s
+              timeout: 2s
+              retries: 5
+              start_period: 2s
+              start_interval: 1s
+
+          sequin_redis:
+            image: redis:7
+            ports:
+              - "7378:6379"
+            command: ["redis-server", "--port", "6379"]
+        EOL
+
+    - name: Start services
+      shell: bash
+      run: docker-compose up -d
+
+    - name: Wait for services to be ready
+      shell: bash
+      run: |
+        timeout=300
+        while [ $timeout -gt 0 ]; do
+          if curl -s http://localhost:7376/health > /dev/null; then
+            echo "Sequin service is ready"
+            exit 0
+          fi
+          sleep 5
+          timeout=$((timeout-5))
+        done
+        echo "Timeout waiting for Sequin service"
+        exit 1

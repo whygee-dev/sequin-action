@@ -1,0 +1,69 @@
+name: Demo Sequin Service with Custom Config
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  demo-custom-config:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: myapp
+          POSTGRES_USER: myapp
+          POSTGRES_PASSWORD: myapp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create custom config
+        run: |
+          mkdir -p config
+          cat > config/custom.yml << EOL
+          database:
+            host: localhost
+            port: 5432
+            name: myapp
+            username: myapp
+            password: myapp
+            pool_size: 30
+          redis:
+            url: redis://sequin_redis:6379
+          secret_key_base: wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If
+          vault_key: 2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY=
+          EOL
+
+      - name: Setup Sequin Service with Custom Config
+        uses: ./.github/actions/sequin-action
+        with:
+          sequin-version: "latest"
+          pg-password: "sequin"
+          secret-key-base: "wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If"
+          vault-key: "2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY="
+          config-file: "./config/custom.yml"
+
+      - name: Test Sequin Connection
+        run: |
+          # Wait a bit for services to be fully ready
+          sleep 10
+
+          # Test PostgreSQL connection
+          PGPASSWORD=myapp psql -h localhost -p 5432 -U myapp -d myapp -c "SELECT 1;"
+
+          # Test Redis connection
+          redis-cli -h localhost -p 7378 ping
+
+          # Test Sequin health endpoint
+          curl -f http://localhost:7376/health
