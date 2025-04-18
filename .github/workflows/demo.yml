@@ -32,13 +32,14 @@ jobs:
       - name: Setup Database
         run: |
           PGPASSWORD=myapp psql -h localhost -U myapp -d myapp << EOL
-          SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
-          CREATE PUBLICATION sequin_pub FOR TABLES IN SCHEMA public WITH (publish_via_partition_root = true);
 
           CREATE TABLE IF NOT EXISTS public."Customer" (
             id SERIAL PRIMARY KEY,
             name VARCHAR(100)
           );
+
+          SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
+          CREATE PUBLICATION sequin_pub FOR TABLES IN SCHEMA public WITH (publish_via_partition_root = true);
 
           CREATE TABLE IF NOT EXISTS public."AuditLog" (
             id BIGSERIAL PRIMARY KEY,
