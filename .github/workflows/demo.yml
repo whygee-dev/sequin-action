@@ -56,8 +56,5 @@ jobs:
 
       - name: Test Sequin Connection
         run: |
-          # Log Sequin logs
-          docker logs sequin
-
           # Test Sequin health endpoint
           curl -f http://localhost:7376/health

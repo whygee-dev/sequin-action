@@ -90,3 +90,11 @@ runs:
     - name: Start services
       shell: bash
       run: docker compose up -d
+
+    - name: Sleep for 10 seconds
+      shell: bash
+      run: sleep 10
+
+    - name: Log Sequin logs
+      shell: bash
+      run: docker compose logs -f sequin
