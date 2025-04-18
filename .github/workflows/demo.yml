@@ -31,8 +31,8 @@ jobs:
 
       - name: Setup Database
         run: |
+          PGPASSWORD=myapp psql -h localhost -U myapp -d postgres -c "CREATE DATABASE myapp;"
           PGPASSWORD=myapp psql -h localhost -U myapp -d myapp << EOL
-
           SELECT pg_create_logical_replication_slot('sequin_slot', 'pgoutput');
           CREATE PUBLICATION sequin_pub FOR TABLES IN SCHEMA public WITH (publish_via_partition_root = true);
 
@@ -82,10 +82,10 @@ jobs:
             - name: 'Customer Change Retention'
               source_database: 'myapp'
               source_table_schema: 'public'
+              source_table_name: 'Customer'
               destination_database: 'myapp'
               destination_table_schema: 'public'
               destination_table_name: 'AuditLog'
-              source_table_name: 'Customer'
           EOL
 
       - name: Setup Sequin Service with Custom Config
