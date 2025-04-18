@@ -94,7 +94,7 @@ runs:
     - name: Check for healthy sequin service for 30 seconds, show logs if not healthy
       shell: bash
       run: |
-        timeout=60
+        timeout=120
         while [ $timeout -gt 0 ]; do
           if curl -s -f http://127.0.0.1:7376/health > /dev/null; then
             echo "Sequin service is healthy"
