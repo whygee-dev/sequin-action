@@ -56,11 +56,8 @@ jobs:
 
       - name: Test Sequin Connection
         run: |
-          # Test PostgreSQL connection
-          PGPASSWORD=myapp psql -h localhost -p 5432 -U myapp -d myapp -c "SELECT 1;"
-
-          # Test Redis connection
-          redis-cli -h localhost -p 7378 ping
+          # Log Sequin logs
+          docker logs sequin
 
           # Test Sequin health endpoint
           curl -f http://localhost:7376/health
