@@ -25,12 +25,24 @@ inputs:
     description: "Timeout in seconds for health check"
     required: false
     default: "30"
+  docker-hub-username:
+    description: "Docker Hub username for authentication"
+    required: false
+  docker-hub-password:
+    description: "Docker Hub password for authentication"
+    required: false
 
 runs:
   using: "composite"
   steps:
     - name: Set up Docker Compose
       uses: docker/setup-compose-action@v1
+
+    - name: Login to Docker Hub
+      if: inputs.docker-hub-username != '' && inputs.docker-hub-password != ''
+      shell: bash
+      run: |
+        echo "${{ inputs.docker-hub-password }}" | docker login -u ${{ inputs.docker-hub-username }} --password-stdin
 
     - name: Create docker-compose file
       shell: bash

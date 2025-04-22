@@ -102,6 +102,8 @@ jobs:
           vault-key: "2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY="
           config-file: "./config/sequin.yml"
           health-check-timeout: "120"
+          docker-hub-username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          docker-hub-password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
       - name: Test Sequin Connection
         run: curl -f http://127.0.0.1:7376/health
