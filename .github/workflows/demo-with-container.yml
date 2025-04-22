@@ -33,6 +33,11 @@ jobs:
           apt-get update
           apt-get install -y postgresql-client
 
+      - name: Install docker
+        run: |
+          apt-get update
+          apt-get install -y docker.io
+
       - name: Setup Database
         run: |
           PGPASSWORD=myapp psql -h postgres -U myapp -d myapp << EOL
