@@ -103,7 +103,7 @@ jobs:
           config-file: "./config/sequin.yml"
           health-check-timeout: "120"
           docker-hub-username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          docker-hub-password: ${{ secrets.DOCKER_HUB_PASSWORD }}
+          docker-hub-password: ${{ secrets.DOCKER_HUB_PAT }}
 
       - name: Test Sequin Connection
         run: curl -f http://127.0.0.1:7376/health

@@ -29,7 +29,7 @@ inputs:
     description: "Docker Hub username for authentication"
     required: false
   docker-hub-password:
-    description: "Docker Hub password for authentication"
+    description: "Docker Hub password or personal access token (PAT) for authentication"
     required: false
 
 runs:
