@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup Sequin Service
-        uses: ./.github/actions/sequin-action
+        uses: whygee-dev/sequin-action
         with:
           sequin-version: "latest"
           config-file: "./path/to/your/sequin/config.yml"
