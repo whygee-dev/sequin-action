@@ -9,7 +9,16 @@ on:
 
 jobs:
   demo:
+    name: Demo (${{ matrix.scenario }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scenario: auto-metrics-port
+            metrics_port: ""
+          - scenario: explicit-metrics-port
+            metrics_port: "18376"
     services:
       postgres:
         image: postgres:16-alpine
@@ -94,16 +103,43 @@ jobs:
           EOL
 
       - name: Setup Sequin Service with Custom Config
+        id: setup-sequin
         uses: ./
         with:
-          sequin-version: "latest"
+          sequin-version: "v0.14.6"
           pg-password: "sequin"
           secret-key-base: "wDPLYus0pvD6qJhKJICO4dauYPXfO/Yl782Zjtpew5qRBDp7CZvbWtQmY0eB13If"
           vault-key: "2Sig69bIpuSm2kv0VQfDekET2qy8qUZGI8v3/h3ASiY="
           config-file: "./config/sequin.yml"
           health-check-timeout: "120"
+          metrics-port: ${{ matrix.metrics_port }}
           docker-hub-username: ${{ secrets.DOCKER_HUB_USERNAME }}
           docker-hub-password: ${{ secrets.DOCKER_HUB_PAT }}
+
+      - name: Verify selected metrics port
+        run: |
+          selected_port="${{ steps.setup-sequin.outputs.metrics-port }}"
+          echo "Selected metrics port: $selected_port"
+
+          if [ -z "$selected_port" ]; then
+            echo "Expected the action to expose a selected metrics port"
+            exit 1
+          fi
+
+          if [ -n "${{ matrix.metrics_port }}" ] && [ "$selected_port" != "${{ matrix.metrics_port }}" ]; then
+            echo "Expected metrics port ${{ matrix.metrics_port }}, got $selected_port"
+            exit 1
+          fi
+
+          if [ -z "${{ matrix.metrics_port }}" ]; then
+            case "$selected_port" in
+              8376|18376|28376|38376|48376) ;;
+              *)
+                echo "Expected auto-selected metrics port to come from the built-in shortlist"
+                exit 1
+                ;;
+            esac
+          fi
 
       - name: Test Sequin Connection
         run: curl -f http://127.0.0.1:7376/health

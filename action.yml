@@ -1,11 +1,16 @@
 name: "Sequin Service Setup"
 description: "Sets up Sequin service with PostgreSQL and Redis"
 
+outputs:
+  metrics-port:
+    description: "The metrics port selected for Sequin"
+    value: ${{ steps.metrics-port.outputs.value }}
+
 inputs:
   sequin-version:
     description: "Version of Sequin to use"
     required: true
-    default: "latest"
+    default: "v0.14.6"
   pg-password:
     description: "Sequin's PostgreSQL password"
     required: true
@@ -25,6 +30,10 @@ inputs:
     description: "Timeout in seconds for health check"
     required: false
     default: "30"
+  metrics-port:
+    description: "Metrics port for Sequin. Defaults to the first free port from a built-in shortlist."
+    required: false
+    default: ""
   docker-hub-username:
     description: "Docker Hub username for authentication"
     required: false
@@ -43,6 +52,65 @@ runs:
       shell: bash
       run: |
         echo "${{ inputs.docker-hub-password }}" | docker login -u ${{ inputs.docker-hub-username }} --password-stdin
+
+    - name: Resolve Sequin metrics port
+      id: metrics-port
+      shell: bash
+      run: |
+        requested_port="${{ inputs.metrics-port }}"
+        candidate_ports=(8376 18376 28376 38376 48376)
+
+        port_in_use() {
+          local port="$1"
+
+          if command -v lsof >/dev/null 2>&1; then
+            lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+            return
+          fi
+
+          if command -v ss >/dev/null 2>&1; then
+            ss -ltn "( sport = :$port )" | tail -n +2 | grep -q .
+            return
+          fi
+
+          echo "Neither lsof nor ss is available to probe TCP ports" >&2
+          exit 1
+        }
+
+        validate_port() {
+          [[ "$1" =~ ^[0-9]+$ ]] && [ "$1" -ge 1 ] && [ "$1" -le 65535 ]
+        }
+
+        metrics_port=""
+        if [ -n "$requested_port" ]; then
+          if ! validate_port "$requested_port"; then
+            echo "metrics-port must be an integer between 1 and 65535" >&2
+            exit 1
+          fi
+
+          if port_in_use "$requested_port"; then
+            echo "Requested metrics-port $requested_port is already in use" >&2
+            exit 1
+          fi
+
+          metrics_port="$requested_port"
+        else
+          for port in "${candidate_ports[@]}"; do
+            if ! port_in_use "$port"; then
+              metrics_port="$port"
+              break
+            fi
+          done
+
+          if [ -z "$metrics_port" ]; then
+            echo "Could not find a free Sequin metrics port from: ${candidate_ports[*]}" >&2
+            echo "Set the metrics-port input to an available TCP port." >&2
+            exit 1
+          fi
+        fi
+
+        echo "Using Sequin metrics port: $metrics_port"
+        echo "value=$metrics_port" >> "$GITHUB_OUTPUT"
 
     - name: Create docker-compose file
       shell: bash
@@ -64,6 +132,7 @@ runs:
               - VAULT_KEY=${{ inputs.vault-key }}
               - REDIS_URL=redis://localhost:7378
               - CONFIG_FILE_PATH=/config/config.local.yml
+              - SEQUIN_METRICS_PORT=${{ steps.metrics-port.outputs.value }}
             volumes:
               - ${{ inputs.config-file }}:/config/config.local.yml
             depends_on:
